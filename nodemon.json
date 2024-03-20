@@ -1,0 +1,8 @@
+{
+    "env": {
+        "MONGO_USER": "rwibutsorobert12",
+        "MONGO_PASSWORD": "Dreamb4rever",
+        "MONGO_DB": "cluster10.v4ojilb.mongodb.net",
+        "PORT": 3000
+    }
+}
