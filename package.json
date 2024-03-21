@@ -1,7 +1,7 @@
 {
   "name": "todo",
   "version": "1.0.0",
-  "main": "app.ts",
+  "main": "app.js",
   "repository": "https://github.com/robsdagreat/TODO-Backend.git",
   "author": "Robs_dagreat",
   "license": "MIT",
