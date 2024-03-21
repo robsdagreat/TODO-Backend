@@ -12,8 +12,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserById = exports.getUsers = exports.deleteUser = exports.createUser = exports.updateUser = void 0;
+exports.updateUser = exports.deleteUser = exports.createUser = exports.getUserById = exports.getUsers = exports.authenticateUser = void 0;
 const users_1 = __importDefault(require("../../models/users"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const authenticateUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+        if (!token) {
+            res.status(401).json({ message: 'Authentication failed. Token missing.' });
+        }
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        req.userId = decoded.userId;
+        next();
+    }
+    catch (error) {
+        res.status(401).json({ message: 'Authentication failed. Invalid token.' });
+    }
+});
+exports.authenticateUser = authenticateUser;
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield users_1.default.find();
@@ -21,43 +39,49 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ messsage: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 exports.getUsers = getUsers;
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { params: { id } } = req;
-        const getUser = yield users_1.default.findById({ _id: id });
+        const { id } = req.params;
+        const user = yield users_1.default.findById(id);
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+        }
         res.status(200).json({
-            message: "User found!",
-            user: getUser
+            message: 'User found!',
+            user,
         });
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: "Server error"
-        });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 exports.getUserById = getUserById;
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const body = req.body;
+        const { email, password } = req.body;
+        const existingUser = yield users_1.default.findOne({ email });
+        if (existingUser) {
+            res.status(400).json({ message: 'Email address already in use' });
+        }
+        const hashedPassword = yield bcrypt_1.default.hash(password, 10);
         const user = new users_1.default({
-            username: body.email,
-            password: body.password
+            email,
+            password: hashedPassword,
         });
         const newUser = yield user.save();
-        res.status(200).json({
-            message: "User created succesfully",
-            user: newUser
+        res.status(201).json({
+            message: 'User created successfully',
+            user: newUser,
         });
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 exports.createUser = createUser;
@@ -66,28 +90,30 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const { id } = req.params;
         const deleteUser = yield users_1.default.findByIdAndDelete(id);
         res.status(200).json({
-            message: "User was deleted successfully",
-            user: deleteUser
+            message: 'User was deleted successfully',
+            user: deleteUser,
         });
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 exports.deleteUser = deleteUser;
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { params: { id }, body } = req;
-        const updatedUser = yield users_1.default.findByIdAndUpdate(id, body);
-        res.status(201).json({
-            message: "User info was updated successfully",
-            user: updatedUser
+        const { id } = req.params;
+        const { email, password } = req.body;
+        const hashedPassword = yield bcrypt_1.default.hash(password, 10);
+        const updatedUser = yield users_1.default.findByIdAndUpdate(id, { email, password: hashedPassword }, { new: true });
+        res.status(200).json({
+            message: 'User info was updated successfully',
+            user: updatedUser,
         });
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 exports.updateUser = updateUser;

@@ -22,8 +22,10 @@ const createTodo = async (req: Request, res: Response): Promise<void> => {
             status: body.status
         });
 
-        const newTodo: ITODO = await todo.save();
+        const newTodo: ITODO | null = await todo.save();
         const allTodos: ITODO[] = await Todo.find();
+
+        console.log("All Todos:", allTodos);
 
         res.status(201).json({
             message: "New task added",
@@ -60,6 +62,10 @@ const deleteTodo = async (req: Request, res: Response): Promise<void> => {
         const { id } = req.params;
 
         const deleteTodo: ITODO | null = await Todo.findByIdAndDelete(id);
+        if (!deleteTodo) {
+             res.status(404).json({ message: "Todo not found" });
+        }
+
         const allTodos: ITODO[] = await Todo.find();
 
         res.status(200).json({
@@ -72,6 +78,7 @@ const deleteTodo = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ message: "Server Error" });
     }
 };
+
 
 const getTodoById= async(req: Request, res: Response) : Promise<void> =>{
     try{

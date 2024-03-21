@@ -35,6 +35,7 @@ const createTodo = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         });
         const newTodo = yield todo.save();
         const allTodos = yield todo_1.default.find();
+        console.log("All Todos:", allTodos);
         res.status(201).json({
             message: "New task added",
             todo: newTodo,
@@ -69,6 +70,9 @@ const deleteTodo = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const { id } = req.params;
         const deleteTodo = yield todo_1.default.findByIdAndDelete(id);
+        if (!deleteTodo) {
+            res.status(404).json({ message: "Todo not found" });
+        }
         const allTodos = yield todo_1.default.find();
         res.status(200).json({
             message: "Task deleted",
