@@ -68,7 +68,7 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-             res.status(400).json({ message: 'Email address already in use' });
+             res.status(400).json({ message: 'Email address already associated with an account!' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -129,4 +129,4 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-export { authenticateUser, getUsers, getUserById, createUser, deleteUser, updateUser };
+export { authenticateUser, AuthenticatedRequest, getUsers, getUserById, createUser, deleteUser, updateUser };

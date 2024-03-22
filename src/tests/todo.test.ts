@@ -1,89 +1,250 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 import { getTodos, createTodo, updateTodo, deleteTodo, getTodoById } from '../controllers/todo/todo';
 import Todo from '../models/todo';
 
-const mockRequest = {} as Request;
-const mockResponse = {
+
+const mockRequest = {
+    body: {
+        name: 'Test Todo',
+        description: 'Test Description',
+        status: 'Pending'
+    },
+    params: { id: '1' }
+} as unknown as Request<any, any, { id: string }, any>;
+  
+  const mockResponse = {
     status: jest.fn().mockReturnThis(),
     json: jest.fn()
-} as unknown as Response;
-
-jest.mock('../models/todo');
-
-describe('Todo controllers', () => {
+  } as unknown as Response;
+  
+  describe('Todo Controller Tests', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+      jest.clearAllMocks(); 
     });
-
-    it('should get all todos', async () => {
-        const mockTodos = [{ name: 'Task 1' }, { name: 'Task 2' }];
-        (Todo.find as jest.Mock).mockResolvedValueOnce(mockTodos as any);
-        await getTodos(mockRequest, mockResponse);
-        expect(mockResponse.status).toHaveBeenCalledWith(200);
-        expect(mockResponse.json).toHaveBeenCalledWith({ todos: mockTodos });
-    });
-    
 
     it('should create a new todo', async () => {
-        const mockBody = {
-            name: 'task',
-            description: 'this task has to be done',
-            status: true
+        const newTodoData = {
+            _id: '1',
+            name: 'Test Todo',
+            description: 'Test Description',
+            status: 'Pending'
         };
-        (Todo.prototype.save as jest.Mock).mockResolvedValueOnce({ _id: '123', ...mockBody } as any);
-        mockRequest.body = mockBody;
+    
+       
+        const saveMock = jest.spyOn(Todo.prototype, 'save').mockResolvedValueOnce(newTodoData);
+    
+        
+        const findMock = jest.spyOn(Todo, 'find').mockResolvedValueOnce([newTodoData]);
+
         await createTodo(mockRequest, mockResponse);
+    
+        expect(saveMock).toHaveBeenCalledWith();
         expect(mockResponse.status).toHaveBeenCalledWith(201);
         expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "New task added",
-            todo: { _id: '123', ...mockBody },
-            todos: expect.any(Array)
-        });
-    },10000);
-
-    it('should update a todo', async () => {
-        const mockId = '123';
-        const updatedTodo = { _id: mockId, name: 'updated', description: 'task to be done' };
-        const allTodos = [{ _id: '1', name: 'Task 1' }, { _id: '2', name: 'Task 2' }];
-        mockRequest.params = { id: mockId };
-        mockRequest.body = { name: 'updated', description: 'task to be done', status: true };
-        (Todo.findByIdAndUpdate as jest.Mock).mockResolvedValueOnce(updatedTodo as any);
-        (Todo.find as jest.Mock).mockResolvedValueOnce(allTodos as any);
-        await updateTodo(mockRequest as Request, mockResponse as Response);
-        expect(mockResponse.status).toHaveBeenCalledWith(200);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "Task updated",
-            todo: updatedTodo,
-            todos: allTodos 
+            message: 'New task added',
+            todo: newTodoData,
+            todos: [newTodoData]
         });
     });
+
+
+  it('should handle server error in createTodo', async () => {
+    const errorMock = new Error('Test Error');
+    jest.spyOn(Todo.prototype, 'save').mockRejectedValueOnce(errorMock);
+
+    await createTodo(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Server Error' });
+  });
+
+  it('should get all todos', async () => {
+    const todos = [{ _id: '1', name: 'Todo 1', description: 'Description 1', status: 'Pending' }, { _id: '2', name: 'Todo 2', description: 'Description 2', status: 'Completed' }];
+    Todo.find = jest.fn().mockResolvedValueOnce(todos);
+
+    await getTodos(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith({ todos });
+  });
+
+  it('should update an existing todo', async () => {
+    const updatedTodoData = {
+      _id: '1',
+      name: 'Updated Todo',
+      description: 'Updated Description',
+      status: 'Completed'
+    };
+
+    const findByIdAndUpdateMock = jest.spyOn(Todo, 'findByIdAndUpdate').mockResolvedValueOnce(updatedTodoData);
+
+    const allTodos = [updatedTodoData];
+    jest.spyOn(Todo, 'find').mockResolvedValueOnce(allTodos);
+
+    await updateTodo(mockRequest, mockResponse);
+
+    expect(findByIdAndUpdateMock).toHaveBeenCalledWith('1', mockRequest.body, { new: true });
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Task updated',
+      todo: updatedTodoData,
+      todos: allTodos
+    });
+});
+
+
+  it('should handle server error in updateTodo', async () => {
+    const errorMock = new Error('Test Error');
+    jest.spyOn(Todo, 'findByIdAndUpdate').mockRejectedValueOnce(errorMock);
+
+    await updateTodo(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Server Error' });
+  });
+
+
+
+  it('should delete a todo', async () => {
+    const deletedTodoData = {
+      _id: '1',
+      name: 'Test Todo',
+      description: 'Test Description',
+      status: 'Pending'
+    };
+    const findByIdAndDeleteMock = jest.spyOn(Todo, 'findByIdAndDelete').mockResolvedValueOnce(deletedTodoData);
+
     
+    const allTodos = [deletedTodoData]; 
+    jest.spyOn(Todo, 'find').mockResolvedValueOnce(allTodos);
 
-    it('should delete a todo', async () => {
-        const mockId = '123';
-        const deletedTodo = { _id: mockId, name: 'deleted', description: 'task to be deleted' };
-        mockRequest.params = { id: mockId };
-        (Todo.findByIdAndDelete as jest.Mock).mockResolvedValueOnce(deletedTodo as any);
-        (Todo.find as jest.Mock).mockResolvedValueOnce([] as any);
-        await deleteTodo(mockRequest as Request, mockResponse as Response);
-        expect(mockResponse.status).toHaveBeenCalledWith(200);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "Task deleted",
-            todo: deletedTodo,
-            todos: []
-        });
-    },30000);
+    await deleteTodo(mockRequest, mockResponse);
 
-    it('should get a todo by id', async () => {
-        const mockId = '123';
-        const getTodo = { _id: mockId, name: 'task', description: 'task to be done' };
-        mockRequest.params = { id: mockId };
-        (Todo.findById as jest.Mock).mockResolvedValueOnce(getTodo as any);
-        await getTodoById(mockRequest as Request, mockResponse as Response);
-        expect(mockResponse.status).toHaveBeenCalledWith(200);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "Todo found",
-            todo: getTodo
-        });
+    expect(findByIdAndDeleteMock).toHaveBeenCalledWith('1');
+
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Task deleted',
+      todo: deletedTodoData,
+      todos: allTodos
     });
+});
+
+
+  it('should handle todo not found in deleteTodo', async () => {
+    jest.spyOn(Todo, 'findByIdAndDelete').mockResolvedValueOnce(null);
+
+    await deleteTodo(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(404);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Todo not found' });
+  });
+
+  it('should handle server error in deleteTodo', async () => {
+    const errorMock = new Error('Test Error');
+    jest.spyOn(Todo, 'findByIdAndDelete').mockRejectedValueOnce(errorMock);
+
+    await deleteTodo(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Server Error' });
+  });
+
+  it('should get a todo by ID', async () => {
+    const mockId = '123';
+    const todo = { _id: mockId, name: 'Test Todo', description: 'Test Description', status: 'Incomplete' };
+
+    mockRequest.params = { id: mockId };
+    Todo.findById = jest.fn().mockResolvedValueOnce(todo);
+
+    await getTodoById(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Todo found',
+      todo
+    });
+  });
+
+  it('should return a 404 error if todo is not found in getTodoById', async () => {
+    const mockId = '123';
+
+    mockRequest.params = { id: mockId };
+
+    Todo.findById = jest.fn().mockResolvedValueOnce(null);
+
+    await getTodoById(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(404);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Todo not found!'
+    });
+  });
+
+  it('should handle server errors in getTodoById', async () => {
+    const mockId = '123';
+
+    mockRequest.params = { id: mockId };
+
+    Todo.findById = jest.fn().mockRejectedValueOnce(new Error('Test Error'));
+
+    await getTodoById(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Server Error'
+    });
+  });
+
+  it('should get a todo by ID', async () => {
+    const mockId = '123';
+    const todo = { _id: mockId, name: 'Test Todo', description: 'Test Description', status: 'Incomplete' };
+
+    mockRequest.params = { id: mockId };
+    Todo.findById = jest.fn().mockResolvedValueOnce(todo);
+
+    await getTodoById(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Todo found',
+      todo
+    });
+  });
+
+  it('should return a 404 error if todo is not found in getTodoById', async () => {
+    const mockId = '123';
+
+    mockRequest.params = { id: mockId };
+
+    Todo.findById = jest.fn().mockResolvedValueOnce(null);
+
+    await getTodoById(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(404);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Todo not found!'
+    });
+  });
+
+  it('should handle server errors in getTodoById', async () => {
+    const mockId = '123';
+
+    mockRequest.params = { id: mockId };
+
+    Todo.findById = jest.fn().mockRejectedValueOnce(new Error('Test Error'));
+
+    await getTodoById(mockRequest, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message: 'Server Error'
+    });
+    });
+
 });

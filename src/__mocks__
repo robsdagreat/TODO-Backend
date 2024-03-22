@@ -1,0 +1,8 @@
+export default {
+  findOne: jest.fn(),
+  find: jest.fn(),
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  findByIdAndDelete: jest.fn(),
+  save: jest.fn(),
+};

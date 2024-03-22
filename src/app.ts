@@ -26,4 +26,7 @@ mongoose.connect(uri).then(() => {
     process.exit(1)
 });
 
+
+export default app
+
             

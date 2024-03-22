@@ -66,7 +66,7 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const { email, password } = req.body;
         const existingUser = yield users_1.default.findOne({ email });
         if (existingUser) {
-            res.status(400).json({ message: 'Email address already in use' });
+            res.status(400).json({ message: 'Email address already associated with an account!' });
         }
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
         const user = new users_1.default({
