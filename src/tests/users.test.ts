@@ -15,6 +15,7 @@ describe('Users Controller', () => {
     jest.clearAllMocks(); // Reset mock functions before each test
   });
 
+  //getUsers test case
   it('should get all users', async () => {
     // Mocking the getUsers function
     const users = [{ _id: '1', email: 'user1@example.com' }, { _id: '2', email: 'user2@example.com' }];
@@ -26,6 +27,7 @@ describe('Users Controller', () => {
     expect(mockResponse.json).toHaveBeenCalledWith({ users });
   });
 
+  //createUser test case
   it('should create a new user', async () => {
   
     const mockBody = {
@@ -48,7 +50,7 @@ describe('Users Controller', () => {
   });
   
   
-
+//updateUser test case
   it('should update a user', async () => {
     const mockId = '123';
     const updatedUser = { _id: mockId, email: 'updated@example.com' };
@@ -83,7 +85,7 @@ describe('Users Controller', () => {
       user: deletedUser
     });
   });
-
+//getUserById test case
   it('should get a user', async () => {
     const mockId = '123';
     const getUser = { _id: mockId, email: 'get@example.com' };

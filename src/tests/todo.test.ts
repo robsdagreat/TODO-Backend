@@ -22,6 +22,7 @@ const mockRequest = {
       jest.clearAllMocks(); 
     });
 
+    //createTodo test case
     it('should create a new todo', async () => {
         const newTodoData = {
             _id: '1',
@@ -69,6 +70,7 @@ const mockRequest = {
     expect(mockResponse.json).toHaveBeenCalledWith({ todos });
   });
 
+  //updateTodo test case
   it('should update an existing todo', async () => {
     const updatedTodoData = {
       _id: '1',
@@ -106,7 +108,7 @@ const mockRequest = {
   });
 
 
-
+//deleteTod test case
   it('should delete a todo', async () => {
     const deletedTodoData = {
       _id: '1',
@@ -155,6 +157,8 @@ const mockRequest = {
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Server Error' });
   });
 
+  //getTodoById test case
+
   it('should get a todo by ID', async () => {
     const mockId = '123';
     const todo = { _id: mockId, name: 'Test Todo', description: 'Test Description', status: 'Incomplete' };
@@ -201,6 +205,7 @@ const mockRequest = {
     });
   });
 
+  //getTodoById test case
   it('should get a todo by ID', async () => {
     const mockId = '123';
     const todo = { _id: mockId, name: 'Test Todo', description: 'Test Description', status: 'Incomplete' };
